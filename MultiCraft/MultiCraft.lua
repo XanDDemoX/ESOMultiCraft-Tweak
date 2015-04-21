@@ -242,7 +242,7 @@ function MultiCraftAddon.ResetSlider(mode,setvalue)
 	
 	local sliderValue = 1
 	
-	local numCraftable = 1
+	local numCraftable = 0
 	
 	-- handle mode and setvalue override parameters
 	if setvalue == nil and type(mode) == "boolean" then
@@ -340,7 +340,6 @@ function MultiCraftAddon.ResetSlider(mode,setvalue)
 				
 				-- Because trait is optional, start with the min of material and style which is always needed
 				numCraftable = zo_min(materialCount, styleItemCount)
-				
 				-- A trait has been selected, 1 is No trait, and if no trait min is already known
 				if traitIndex ~= 1 then
 					
@@ -353,7 +352,6 @@ function MultiCraftAddon.ResetSlider(mode,setvalue)
 						numCraftable = 1
 					end
 				end
-				
 			end
 		-- 3rd tab, deconstruction
 		elseif mode == MultiCraftAddon.SMITHING_MODE_DECONSTRUCTION then
@@ -364,27 +362,22 @@ function MultiCraftAddon.ResetSlider(mode,setvalue)
 		end
 	end
 	
-	if numCraftable > 0 then
-		-- DisableSlider or show ?
-		MultiCraftAddon.debug(".ResetSlider->numCraftable = " .. numCraftable)
-		MultiCraftAddon.EnableOrDisableUI()
-	end
-	
+
+	MultiCraftAddon.EnableOrDisableUI()
+
 	MultiCraftAddon.debug(".ResetSlider->numCraftable = " .. tostring(zo_floor(numCraftable)))
-	
+
 	-- Protection against divisions
 	numCraftable = zo_floor(numCraftable)
-	
 	-- Don't show slider if Qty = 1
 	-- MultiCraftSlider is handled by XML and inherits from ZO_Slider
-	if numCraftable == 1 then
-		MultiCraftAddon.debug(".ResetSlider->Hide slider")
-		MultiCraftSlider:SetHidden(true)
-	else
-		MultiCraftAddon.debug(".ResetSlider->Show slider")
-		MultiCraftSlider:SetHidden(false)
-		MultiCraftSlider:SetMinMax(1, numCraftable)
+	
+	MultiCraftSlider:SetHidden(numCraftable <= 1)
+	
+	if numCraftable > 0 then 
+		MultiCraftSlider:SetMinMax(1, math.max(numCraftable,1))
 	end
+
 	
 	if setvalue == true then 
 
@@ -395,10 +388,10 @@ function MultiCraftAddon.ResetSlider(mode,setvalue)
 		elseif MultiCraftAddon.settings.sliderDefault then
 		-- clamp
 			MultiCraftSlider:SetValue(math.min(numCraftable,math.max(MultiCraftAddon.settings.sliderDefault,1)))
-		else
+		elseif numCraftable > 0 then
 			MultiCraftSlider:SetValue(1)
 		end
-	else
+	elseif numCraftable > 0 then
 		-- clamp again
 		MultiCraftSlider:SetValue(math.min(numCraftable,math.max(MultiCraftSlider:GetValue(),1)))
 	end
