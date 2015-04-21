@@ -442,7 +442,7 @@ function MultiCraftAddon.ContinueWork(workFunc)
 		EVENT_MANAGER:UnregisterForEvent(MultiCraftAddon.name, EVENT_CRAFT_COMPLETED)
 		-- Reset slider to 1, and change work flag
 		MultiCraftAddon.isWorking = false
-		MultiCraftAddon.ResetSlider()
+		MultiCraftAddon.ResetSlider(false)
 	end
 end
 
