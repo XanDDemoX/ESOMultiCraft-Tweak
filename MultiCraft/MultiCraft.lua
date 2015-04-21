@@ -231,19 +231,31 @@ function MultiCraftAddon.UpdateSliderValueAndKeybind()
 end
 
 -- This function reset the slider to the correct values (min = 1, max = qty craftable, and maybe the default value)
-function MultiCraftAddon.ResetSlider()
+function MultiCraftAddon.ResetSlider(mode,setvalue)
 
 	MultiCraftAddon.debug(".ResetSlider()")
-	
+
 	-- Can really occurs ?
 	if not MultiCraftAddon.selectedCraft then return end
-	
 	-- DisableSlider or show ?
 	MultiCraftAddon.EnableOrDisableUI()
 	
+	local sliderValue = 1
+	
 	local numCraftable = 1
+	
+	-- handle mode and setvalue override parameters
+	if setvalue == nil and type(mode) == "boolean" then
+		setvalue = mode
+		mode = nil
+	end
+	
+	if setvalue == nil then
+		setvalue = true
+	end
+	
 	-- On which tab are we ? MultiCraftAddon.selectedCraft is wrapped by OverrideXXX
-	local mode = MultiCraftAddon.selectedCraft:GetMode()
+	mode = mode or MultiCraftAddon.selectedCraft:GetMode()
 	
 	-- Get qty craftable
 	-- For Provisionner
@@ -374,13 +386,22 @@ function MultiCraftAddon.ResetSlider()
 		MultiCraftSlider:SetMinMax(1, numCraftable)
 	end
 	
-	-- User can set its default value instead of 1, TODO, check if default is between MinMax
-	if MultiCraftAddon.settings.sliderDefault then
-		MultiCraftSlider:SetValue(numCraftable)
+	if setvalue == true then 
+
+		-- set to max value for refining and deconstructing.
+		if (MultiCraftAddon.selectedCraft == MultiCraftAddon.smithing and (mode == MultiCraftAddon.SMITHING_MODE_REFINEMENT or mode == MultiCraftAddon.SMITHING_MODE_DECONSTRUCTION))
+		or (MultiCraftAddon.selectedCraft == MultiCraftAddon.enchanting and mode == MultiCraftAddon.ENCHANTING_MODE_EXTRACTION) then
+			MultiCraftSlider:SetValue(numCraftable)
+		elseif MultiCraftAddon.settings.sliderDefault then
+		-- clamp
+			MultiCraftSlider:SetValue(math.min(numCraftable,math.max(MultiCraftAddon.settings.sliderDefault,1)))
+		else
+			MultiCraftSlider:SetValue(1)
+		end
 	else
-		MultiCraftSlider:SetValue(1)
+		-- clamp again
+		MultiCraftSlider:SetValue(math.min(numCraftable,math.max(MultiCraftSlider:GetValue(),1)))
 	end
-	
 	-- Set Slider Value and its Keybind (generally R button)
 	MultiCraftAddon.UpdateSliderValueAndKeybind()
 	
@@ -592,9 +613,11 @@ function MultiCraftAddon.OverrideSmithing()
 	-- tab change
 	MultiCraftAddon.smithing.SetMode = SMITHING.SetMode
 	
-	--SMITHING.SetMode = function(...)
-	--	MultiCraftAddon.smithing.SetMode(...)
-	--end
+	-- override set mode to fix change tab from de-construct to creation defaulting to maximum
+	SMITHING.SetMode = function(self,mode,...)
+		MultiCraftAddon.smithing.SetMode(self,mode,...)
+		zo_callLater(function() MultiCraftAddon.ResetSlider(mode) end,1)
+	end
 	
 	-- done by EVENT_CRAFTING_STATION_INTERACT
 	
@@ -607,7 +630,8 @@ function MultiCraftAddon.OverrideSmithing()
 	MultiCraftAddon.smithing.OnSelectedPatternChanged = SMITHING.OnSelectedPatternChanged
 	SMITHING.OnSelectedPatternChanged = function(...)
 		MultiCraftAddon.smithing.OnSelectedPatternChanged(...)
-		MultiCraftAddon.ResetSlider()
+		-- preserve current slider value (if in range)
+		MultiCraftAddon.ResetSlider(false)
 	end
 	
 	-- Item selection in deconstruction
