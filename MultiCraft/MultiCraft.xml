@@ -1,0 +1,18 @@
+<GuiXml>
+	<Controls>
+		<TopLevelControl name="MultiCraft" mouseEnabled="false" hidden="true">
+			<Dimensions x="300" y="100" />
+			<Anchor point="BOTTOM" />
+			<Controls>
+				<Slider name="$(parent)Slider" orientation="HORIZONTAL" step=1 inherits="ZO_Slider" enabled="true" mouseEnabled="true" allowDraggingFromThumb="true">
+					<Anchor point="TOP" offsetY="20" />
+					
+					<OnMouseWheel>
+						MultiCraftAddon.OnMouseWheel(self, delta)
+					</OnMouseWheel>
+					
+				</Slider>
+			</Controls>
+		</TopLevelControl>
+	</Controls>
+</GuiXml>
